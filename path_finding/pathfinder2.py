@@ -1,5 +1,5 @@
 #!env python2
-from random import randint, shuffle
+from random import random, randint
 from time import sleep
 from copy import copy,deepcopy
 from pprint import pprint
@@ -8,6 +8,7 @@ from math import sqrt
 import sys
 import os
 
+counter = 0
 
 class Node():
     """A node class for A* Pathfinding"""
@@ -24,6 +25,7 @@ class Node():
         return self.position == other.position
 
 def astar(maze, start, end):
+    global counter
     """Returns a list of tuples as a path from the given start to the given end in the given maze"""
 
     # Create start and end node
@@ -53,8 +55,8 @@ def astar(maze, start, end):
         # Pop current off open list, add to closed list
         open_list.pop(current_index)
         closed_list.append(current_node)
-        print(u"\033[{};{}H\u001b[42m ".format(current_node.position[0], current_node.position[1]))
-        sleep(1/60.0)
+        print(u"\033[{};{}H\u001b[{}m ".format(current_node.position[0], current_node.position[1], 41))
+        sleep(1/720.0)
 
         # Found the goal
         if current_node == end_node:
@@ -67,15 +69,16 @@ def astar(maze, start, end):
 
         # Generate children
         children = []
-        # this is the diagonal version
         for new_position in [(0, -1), (0, 1), (-1, 0), (1, 0), (-1, -1), (-1, 1), (1, -1), (1, 1)]: # diagonal ajacent
         #for new_position in [(0, -1), (0, 1), (-1, 0), (1, 0)]: # 4 directions only
-
             # Get node position
             node_position = (current_node.position[0] + new_position[0], current_node.position[1] + new_position[1])
 
             # Make sure within range
-            if node_position[0] > (len(maze) - 1) or node_position[0] < 0 or node_position[1] > (len(maze[len(maze)-1]) -1) or node_position[1] < 0:
+            if node_position[0] > (len(maze) - 1) \
+                or node_position[0] < 0 \
+                or node_position[1] > (len(maze[0]) -1) \
+                or node_position[1] < 0:
                 continue
 
             # Make sure walkable terrain
@@ -90,6 +93,7 @@ def astar(maze, start, end):
 
         # Loop through children
         for child in children:
+            counter += 1
 
             # Child is on the closed list
             for closed_child in closed_list:
@@ -99,8 +103,8 @@ def astar(maze, start, end):
             # Create the f, g, and h values
             child.g = current_node.g + 1
             child.h = \
-                ((child.position[0] - end_node.position[0]) ** 2) + \
-                ((child.position[1] - end_node.position[1]) ** 2)
+                ( (child.position[0] - end_node.position[0]) ** 2) + \
+                ( (child.position[1] - end_node.position[1]) ** 2)
             child.f = child.g + child.h
 
             # Child is already in the open list
@@ -110,9 +114,8 @@ def astar(maze, start, end):
 
             # Add the child to the open list
             open_list.append(child)
-            print(u"\033[{};{}H\u001b[40m ".format(child.position[0], child.position[1]))
+            print(u"\033[{};{}H\u001b[{}m ".format(child.position[0], child.position[1], 43 ))
             path = [ x.position for x in open_list ]
-
 
 # GRID Printer
 # Calls route picker for path highlighting
@@ -139,9 +142,7 @@ def make_grid(size):
 
 def rando_coords(x, y):
     rx = randint(0, x-1)
-    ry = rx
-    while rx == ry:
-        ry = randint(0, y-1)
+    ry = randint(0, y-1)
     return rx, ry
 
 def n_spots(count, size):
@@ -149,17 +150,35 @@ def n_spots(count, size):
     spots = []
     while len(spots) < count:
         R = rando_coords(x, y)
-        if not x in spots:
-            spots.append(R)
+        spots.append(R)
     return spots
 
 def mod_grid(grid, start, goal, spot):
-    if spot != start or spot != goal:
+    avoid = [ start, goal ]
+    if spot not in avoid:
         mygrid = deepcopy(grid)
         x = spot[0]
         y = spot[1]
         mygrid[x][y] = "#"
         return mygrid
+
+def efficient_marks(grid, start, stop, pct):
+    grout = deepcopy(grid)
+    def pct_chance():
+        if random() < (pct/100.0):
+            return True
+        else:
+            return False
+    for i, row in enumerate(grid):
+        for j, column in enumerate(row):
+            if pct_chance():
+                grout[i][j] = "#"
+            else:
+                grout[i][j] = ""
+    # make sure we have entrance and exit holes
+    grout[start[0]][start[1]] = ""
+    grout[end[0]][end[1]] = ""
+    return grout
 
 def mark_some(grid, start, goal, spots):
     grout = deepcopy(grid)
@@ -175,21 +194,22 @@ if __name__ == '__main__':
     rows, columns = os.popen('stty size', 'r').read().split()
     size="{}x{}".format(rows, columns)
 
-    pct = int(sys.argv[1]) / 100.0
-    if not pct:
-        pct = 0.19
+    if len(sys.argv) > 1:
+        pct = int(sys.argv[1])
+    else:
+        pct = 10
 
     # setup start, end
     xy = size_to_xy(size)
-    bad = (xy[0]*xy[1])*pct
+    bad = (xy[0] * xy[1]) * pct
     start = (0, 0) # center
     end = (xy[0]-1, xy[1]-1)
 
     # make and mark
     board = make_grid(size)
     bad_spots = n_spots(bad, size)
-    #bad_spots = [ (1,6), (2,5), (3,4), (4,3)]
-    board = mark_some(board, start, end, bad_spots )
+    #board = mark_some(board, start, end, bad_spots )
+    board = efficient_marks(board, start, end, pct)
 
     # pathfinding
     print_grid(board, [])
