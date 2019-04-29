@@ -81,7 +81,7 @@ def astar(maze, start, end):
                 or node_position[1] < 0:
                 continue
 
-            # Make sure walkable terrain
+            # Make sure node is empty
             if maze[node_position[0]][node_position[1]]:
                 continue
 
@@ -103,8 +103,8 @@ def astar(maze, start, end):
             # Create the f, g, and h values
             child.g = current_node.g + 1
             child.h = \
-                ( (child.position[0] - end_node.position[0]) ** 2) + \
-                ( (child.position[1] - end_node.position[1]) ** 2)
+                ( (end_node.position[0] - child.position[0]) ** 2) + \
+                ( (end_node.position[1] - child.position[1]) ** 2)
             child.f = child.g + child.h
 
             # Child is already in the open list
@@ -114,8 +114,8 @@ def astar(maze, start, end):
 
             # Add the child to the open list
             open_list.append(child)
-            print(u"\033[{};{}H\u001b[{}m ".format(child.position[0], child.position[1], 43 ))
-            path = [ x.position for x in open_list ]
+            print(u"\033[{};{}H\u001b[{}m ".format(child.position[0], child.position[1], 43  ))
+            path = [ x.position for x in closed_list ]
 
 # GRID Printer
 # Calls route picker for path highlighting
@@ -133,14 +133,15 @@ def size_to_xy(size):
     y = int(coords[1])
     return x,y
 
-def make_grid(size):
+def make_grid(size, start, end, pct):
     x, y = size_to_xy(size)
     row = ['']*y
     row = [ '' for a in range(0, y) ]
     grid = [ deepcopy(row) for b in range(0, x) ]
+    grid = efficient_marks(grid, start, end, pct)
     return grid
 
-def efficient_marks(grid, start, stop, pct):
+def efficient_marks(grid, start, end, pct):
     grout = deepcopy(grid)
     def pct_chance():
         if random() < (pct/100.0):
@@ -170,27 +171,26 @@ if __name__ == '__main__':
     # parameters
 
     rows, columns = os.popen('stty size', 'r').read().split()
-    size="{}x{}".format(rows, columns)
+    size="{}x{}".format(int(rows), columns)
 
     if len(sys.argv) > 1:
-        pct = int(sys.argv[1])
+        pct_bad = int(sys.argv[1])
     else:
-        pct = 10
+        pct_bad = 25.0
 
     # setup start, end
     xy = size_to_xy(size)
-    bad = (xy[0] * xy[1]) * pct/100.0
+    bad = (xy[0] * xy[1]) * pct_bad/100.0
     start = (0, 0) # center
     end = (xy[0]-1, xy[1]-1)
 
     # make and mark
-    board = make_grid(size)
-    board = efficient_marks(board, start, end, pct)
+    board = make_grid(size, start, end, pct_bad)
 
     # pathfinding
     print_grid(board, [])
     path = astar(board, start, end)
     print(u'\033[{};{}H\u001b[0m'.format(end[1], 0))
-    print("start: {} end: {}, bad: {}".format(start, end, bad))
-    print("Steps taken: {}".format(len(path)))
-    print("Ticks taken: {}".format(counter))
+    print(u"Start: {} end: {}, bad: {}".format(start, end, bad))
+    print(u"Path lenth: {}".format(len(path)))
+    print(u"Steps taken: {}".format(counter))
