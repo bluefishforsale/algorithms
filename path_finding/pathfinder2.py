@@ -37,7 +37,7 @@ class Node():
     def __eq__(self, other):
         return self.position == other.position
 
-def astar(maze, start, end, rpath={}):
+def astar(maze, start, end ):
     global counter
     """Returns a list of tuples as a path from the given start to the given end in the given maze"""
 
@@ -51,15 +51,21 @@ def astar(maze, start, end, rpath={}):
     open_list = []
     closed_list = []
 
+    # lists are too slow, we need a hashable data structure with O(1)
+    state_dict = dict()
+
     # Add the start node
     open_list.append(start_node)
+    state_dict[start_node.position] = start_node
 
     # Loop until you find the end
+    #while len(state_dict) > 0:
     while len(open_list) > 0:
 
         # Get the current node
         current_node = open_list[0]
         current_index = 0
+        #for index, item in enumerate(open_list):
         for index, item in enumerate(open_list):
             if item.f < current_node.f:
                 current_node = item
@@ -95,6 +101,7 @@ def astar(maze, start, end, rpath={}):
 
             # Make sure node is empty
             if maze[node_position[0]][node_position[1]]:
+                closed_list.append(Node(current_node, node_position))
                 continue
 
             # No failures? ok, create the child
