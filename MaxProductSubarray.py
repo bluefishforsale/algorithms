@@ -1,5 +1,5 @@
 data = [2, 3, -2, 4]
-data = [2, 3, -2, 4, 2, 3, 1]
+# data = [2, 3, -2, 4, 2, 3, 1]
 
 def product(input):
   product = 1
