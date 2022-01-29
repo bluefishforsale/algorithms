@@ -5,8 +5,8 @@
 # Examples:
 # inputs: n=4, m=2
 # output = 4
-# inputs: n=3, m=3
-# output = 6
+# inputs: n=3, m=4
+# output = 10
 
 def rect_path(x,y):
   # re-orient
@@ -18,7 +18,7 @@ def rect_path(x,y):
     return 0
   # if the smallest dimension is 1, then we  have a line.
   # return the length of the line
-  if smaller <= 2:
+  if smaller == 1:
     # there is only one path through a line, no matter how long
     return bigger
   # all other cases have both dimensions >= 2
@@ -28,6 +28,6 @@ def rect_path(x,y):
   return rect_path(bigger, smaller-1) + rect_path(bigger-1, smaller)
 
 
-for n in range(2,5):
-  for m in range(1,5):
+for n in range(2,12):
+  for m in range(1,10):
     print("inputs: ({},{}) = {}".format(n, m, rect_path(n, m)))
