@@ -8,4 +8,5 @@ def isEven(num):
   else:
     return False
 
-print(isEven(int(sys.argv[1])))
+if __name__ == "__main__":
+  print(isEven(int(sys.argv[1])))
